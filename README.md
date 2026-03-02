@@ -37,3 +37,5 @@ The bot uses the **Polymarket CLOB client** (Polygon, chain ID 137), **USDC** fo
 ## License
 
 ISC (see `package.json`). Author: ewindmer.
+
+## Keywords: **polymarket copytrading bot**, **polymarket copy trading bot**
