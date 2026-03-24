@@ -1,167 +1,186 @@
-```
-POLYMARKET COPY ENGINE — INSTRUMENT BRIEF
-Version   1.0.0
-Network   Polygon (USDC)
-Language  TypeScript / Node.js 18+
-State     MongoDB
-Status    ACTIVE
-```
+<div align="center">
+
+[![Node](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Required-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Network](https://img.shields.io/badge/Polygon-USDC-8247E5?style=flat-square&logo=polygon&logoColor=white)](https://polygon.technology)
+[![License](https://img.shields.io/badge/License-ISC-blue?style=flat-square)](LICENSE)
+
+</div>
 
 ---
 
-```
-INSTRUMENT
-──────────────────────────────────────────────────────────────────────
-Type          Automated copy-trade executor
-Target        Polymarket prediction markets
-Signal source Observed wallet activity — USER_ADDRESS
-Execution     Polymarket CLOB API (OrderType.FOK)
-Sizing model  Proportional — follower_balance ÷ source_balance × size
-Latency       ~1–3s from source fill to order submission
-```
+**3:47am.**
+
+Car just moved on a market nobody was watching.
+
+Position sized heavy. Conviction trade. The kind that looks obvious in hindsight and invisible in the moment.
+
+You were asleep.
+
+Your bot wasn't.
+
+By 3:47:03 — two seconds after Car's fill hit the chain — your order was already in the queue. Same market. Proportional size. Same direction.
+
+You woke up to a green position and a MongoDB log with 1 new entry.
+
+**That's what this bot does.**
 
 ---
 
-```
-TARGET WALLET
-──────────────────────────────────────────────────────────────────────
-Handle        Car
-Profile       https://polymarket.com/@Car?tab=activity
-Address       0x7C3Db723F1D4d8cB9C550095203b686cB11E5C6B
-Signal type   TRADE events, deduplicated by transaction hash
-```
+## The Trader
+
+Car is one of Polymarket's most consistently profitable wallets. Not lucky — *consistent*. The kind of trader who shows up on leaderboards across political markets, sports, and macro events. High-conviction entries. Patient sizing.
+
+The edge isn't secret. It's public, on-chain, observable.
+
+This bot observes it — and acts on it before you've even checked your phone.
+
+| | |
+|---|---|
+| **Profile** | [Car on Polymarket](https://polymarket.com/@Car?tab=activity) |
+| **Wallet** | `0x7C3Db723F1D4d8cB9C550095203b686cB11E5C6B` |
+| **Network** | Polygon · USDC |
 
 ---
 
+## What Happens Every Second
+
+While you're working, sleeping, or not watching charts — this is running:
+
 ```
-EXECUTION MODEL
-──────────────────────────────────────────────────────────────────────
-Step 1   Poll  activities?user=<wallet> at FETCH_INTERVAL (default: 1s)
-Step 2   Gate  Reject events older than TOO_OLD_TIMESTAMP (default: 24h)
-Step 3   Gate  Reject if |current_price - source_fill| > 0.05
-Step 4   Size  order_size = (follower_usdc / source_usdc) × source_size
-Step 5   Post  Submit FOK order via @polymarket/clob-client
-Step 6   Retry On failure, retry up to RETRY_LIMIT (default: 3)
-Step 7   Log   Write detection + execution record to MongoDB
+[03:47:01] Polling Car's wallet...          no new activity
+[03:47:02] Polling Car's wallet...          no new activity
+[03:47:03] Polling Car's wallet...          TRADE detected
+           Market    Will X happen by Y?
+           Side      BUY
+           Size      $4,200
+           Price     0.61
+
+[03:47:03] Validating event...              age OK (0s)
+[03:47:03] Checking price drift...          current 0.62 — within threshold
+[03:47:03] Scaling position...              your balance ÷ Car's balance × $4,200
+[03:47:04] Submitting order...              OK — filled at 0.62
+[03:47:04] Writing to MongoDB...            done
+
+[03:47:04] Waiting for next signal...
 ```
+
+That loop runs every second. Every hour. Every night you don't feel like watching markets.
 
 ---
 
-```
-OPERATIONAL PARAMETERS
-──────────────────────────────────────────────────────────────────────
-Variable               Required  Default  Description
-─────────────────────────────────────────────────────────────────────
-USER_ADDRESS           YES       —        Target wallet(s), comma-sep
-PROXY_WALLET           YES       —        Your execution wallet
-PRIVATE_KEY            YES       —        Signing key — never commit
-CLOB_HTTP_URL          YES       —        https://clob.polymarket.com
-CLOB_WS_URL            YES       —        wss://clob-ws.polymarket.com
-RPC_URL                YES       —        Polygon RPC endpoint
-USDC_CONTRACT_ADDRESS  YES       —        0x2791Bca1f2de4661...aa84174
-MONGO_URI              YES       —        MongoDB connection string
-FETCH_INTERVAL         NO        1        Poll cadence in seconds
-TOO_OLD_TIMESTAMP      NO        24       Max event age in hours
-RETRY_LIMIT            NO        3        Max order retries
-```
+## The Setup
 
----
+You don't need to understand prediction markets.  
+You don't need to track news cycles.  
+You need three things: a funded Polygon wallet, MongoDB, and 5 minutes.
 
-```
-PERFORMANCE PARAMETERS
-──────────────────────────────────────────────────────────────────────
-Metric                  Value          Notes
-────────────────────────────────────────────────────────────────────
-Copy latency            ~1–3s          Network + API dependent
-Max price deviation     0.05           Configurable in executor
-Position sizing         Proportional   Source/follower balance ratio
-Retry cap               3              Marks failed after limit
-Deduplication           Tx hash        Idempotent — no double fills
-Trade log retention     Indefinite     MongoDB, queryable
+### 1. Clone
 
-[ Fill in live PnL, win rate, and drawdown after your first run ]
-```
-
----
-
-```
-CODEBASE MAP
-──────────────────────────────────────────────────────────────────────
-src/index.ts                  Bootstrap, env validation, orchestration
-src/services/tradeMonitor.ts  Activity fetch + MongoDB write
-src/services/tradeExecutor.ts Pending trade scan + order dispatch
-src/utils/postOrder.ts        Buy / sell / merge order logic
-src/utils/createClobClient.ts API key derivation + CLOB init
-src/utils/getMyBalance.ts     USDC balance via Polygon RPC
-src/models/userHistory.ts     Per-wallet activity collections
-src/config/db.ts              MongoDB connection handler
-```
-
----
-
-```
-RISK PARAMETERS
-──────────────────────────────────────────────────────────────────────
-Factor               Exposure
-────────────────────────────────────────────────────────────────────
-Slippage             Entry price will differ from source fill
-Latency              Odds shift between source fill and your order
-Source drawdown      You mirror losses as well as gains
-RPC/API outage       Missed signals — no built-in alerting
-Key management       PRIVATE_KEY in .env — use a dedicated wallet
-Smart contract       On-chain interaction risk — Polygon/USDC
-
-RECOMMENDED: Fund with capital sized for total loss tolerance.
-             Monitor manually for first 20 trades before scaling.
-             This software is not financial advice.
-```
-
----
-
-```
-DEPLOYMENT
-──────────────────────────────────────────────────────────────────────
-# 1. Install
+```bash
+git clone https://github.com/LemnLabs/polymarket-trading-bot.git
+cd polymarket-trading-bot
 npm install
+```
 
-# 2. Configure
+### 2. Configure
+
+```bash
 cp env.example .env
-# Edit USER_ADDRESS, PROXY_WALLET, PRIVATE_KEY
+```
 
-# 3. Run (development)
-npm run dev
+Open `.env`. Fill in exactly these:
 
-# 4. Run (production)
+```env
+# The wallet you're following — already set to Car
+USER_ADDRESS=0x7C3Db723F1D4d8cB9C550095203b686cB11E5C6B
+
+# Your wallet
+PROXY_WALLET=0xYourWalletAddress
+PRIVATE_KEY=your_private_key_here        # keep this private
+
+# Leave everything below as-is to start
+CLOB_HTTP_URL=https://clob.polymarket.com
+CLOB_WS_URL=wss://clob-ws.polymarket.com
+RPC_URL=https://polygon-rpc.com
+USDC_CONTRACT_ADDRESS=0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+MONGO_URI=mongodb://localhost:27017/polymarket_car
+FETCH_INTERVAL=1
+TOO_OLD_TIMESTAMP=24
+RETRY_LIMIT=3
+```
+
+### 3. Run
+
+```bash
 npm run build && npm start
 ```
 
----
-
-```
-COMMANDS
-──────────────────────────────────────────────────────────────────────
-npm run dev        ts-node src/index.ts (hot reload)
-npm run build      Compile TypeScript → dist/
-npm start          Run dist/index.js
-npm run lint       ESLint check
-npm run lint:fix   ESLint auto-fix
-npm run format     Prettier format
-```
+The bot is now live. It will log every poll, every detection, every fill.
 
 ---
 
-```
-STACK
-──────────────────────────────────────────────────────────────────────
-Runtime     Node.js 18+
-Language    TypeScript (strict: true)
-Trading     @polymarket/clob-client
-Wallet      ethers
-HTTP        axios
-DB          mongoose (MongoDB)
-UX          ora, chalk
+## The Guardrails
 
-DEPENDENCIES: See package.json
-LICENSE:      ISC © LemnLabs
-ISSUES:       https://github.com/LemnLabs/polymarket-trading-bot/issues
+The bot won't blindly chase every signal. Before placing any order it checks:
+
+| Check | What it does |
+|---|---|
+| **Staleness filter** | Ignores trades older than 24 hours — no acting on old data |
+| **Price drift gate** | Skips if the market has moved more than 5% from Car's fill |
+| **Proportional sizing** | Scales your position to your balance — no overexposure |
+| **Retry cap** | Attempts each order up to 3× before marking it as failed |
+| **Full audit log** | Every detection and execution written to MongoDB |
+
+---
+
+## The Honest Part
+
+Copy trading is not a guarantee.
+
+Car takes losses. You will mirror some of them. Markets move between Car's fill and yours — sometimes in the wrong direction. RPC endpoints go down. APIs lag. Liquidity dries up.
+
+**Start small. Watch the first 20 trades manually. Then decide if you scale.**
+
+This software is for educational purposes. Not financial advice. Your capital, your responsibility.
+
+---
+
+## Under the Hood
+
 ```
+src/
+├── index.ts                  Entry point — env validation + orchestration
+├── services/
+│   ├── tradeMonitor.ts       Polls wallet activity, writes new trades to DB
+│   └── tradeExecutor.ts      Reads pending trades, executes orders
+├── utils/
+│   ├── postOrder.ts          Buy / sell / merge order logic
+│   ├── createClobClient.ts   CLOB API key derivation + client init
+│   └── getMyBalance.ts       USDC balance read via Polygon RPC
+├── models/
+│   └── userHistory.ts        MongoDB schema for per-wallet activity
+└── config/
+    └── db.ts                 MongoDB connection
+```
+
+Stack: TypeScript · Node.js · `@polymarket/clob-client` · `ethers` · `mongoose` · `axios`
+
+---
+
+## Contributing
+
+If you've improved execution speed, sizing logic, or added PnL reporting — open a PR. The bot gets better when people who run it make it better.
+
+---
+
+<div align="center">
+
+*Car is trading right now.*
+*The only question is whether your bot is running.*
+
+**[⭐ Star this repo](https://github.com/LemnLabs/polymarket-trading-bot)** · **[View Car's wallet](https://polymarket.com/@Car?tab=activity)**
+
+ISC © [LemnLabs](https://github.com/LemnLabs)
+
+</div>
