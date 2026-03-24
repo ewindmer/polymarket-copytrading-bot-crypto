@@ -67,7 +67,7 @@ Some of the most-watched wallets on Polymarket right now:
 |---|---|---|
 | **Car** | [polymarket.com/@Car](https://polymarket.com/@Car?tab=activity) | Top leaderboard, high-conviction sizing |
 | **0x8dxd** | [polymarket.com/@0x8dxd](https://polymarket.com/@0x8dxd?tab=activity) | Highly active, watched by the community |
-| **Your whale** | whoever you've been watching | — |
+| **Your whale** | whoever you've been watching | blablabla |
 
 > Find wallets worth following at [polymarket.com/leaderboard](https://polymarket.com/leaderboard) - sort by profit, filter by market type, pick your signal.
 
