@@ -31,7 +31,7 @@ Here's the uncomfortable truth:
 
 ## What's Actually Happening To Your Money
 
-Every minute you spend noticing a whale's move, opening the app, checking the current odds, deciding your size, and placing the order -
+Every minute you spend noticing a whale's move, opening the app, checking the current odds, deciding your size, and placing the order 
 
 - the market has already adjusted.
 
