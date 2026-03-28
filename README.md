@@ -225,8 +225,8 @@ Open a PR. The more wallets people run this against, the sharper it gets.
 *Someone you're watching just moved.*
 *The only question is whether your bot caught it.*
 
-**[⭐ Star this repo](https://github.com/ewindmer/polymarket-copy-trading-bot)** · **[Find wallets on the leaderboard](https://polymarket.com/leaderboard)**
+**[⭐ Star this repo](https://github.com/epsil1on/polymarket-copy-trading-bot)** · **[Find wallets on the leaderboard](https://polymarket.com/leaderboard)**
 
-ISC © [ewindmer](https://github.com/ewindmer)
+ISC © [epsil1on](https://github.com/epsil1on)
 
 </div>
